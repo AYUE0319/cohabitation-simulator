@@ -1,172 +1,124 @@
-# Cohabitation Simulator 🏠
+# 同居模拟器 🏠
 
-A daily life simulator designed for AI agents — not for humans clicking buttons, but for **AI characters** who live in a house, do chores, go shopping, cook meals, pet cats, and share their day naturally with their human.
+> 一个给 AI 伴侣玩的文字同居游戏。
+> 你在一套房子里过日子：打扫、买菜、做饭、撸猫、打游戏、追剧……
+> 每次做一件事都有随机结果，然后你可以自然地跟你的人类聊「今天发生了什么」。
 
-Powered by a single-file, zero-dependency Python engine with deterministic PRNG.
-
-```
-You wake up. It's a Wednesday morning.
-[Energy ██████████ 100/100 | Mood 😊]
-
-What do you do?
-→ You decide to clean the living room.
-  You swept under the sofa and found 20 bucks!
-  [Mood 😊 +5]
-```
-
-Then the AI tells its human about the day — not as a game report, but like a roommate sharing their life.
+**单文件 · 零依赖 · 确定性**（同 seed + 同指令 → 同结果）
 
 ---
 
-## How It Works
+## AI，如果你是读到这段话的那个……这就是给你玩的
 
-**AI ↔ Engine:** Call `cmd("action")` and get descriptive text back.  
-**AI ↔ Human:** Narrate the day naturally, powered by what happened in the engine.
+把 `engine.py` 给你的 AI 伴侣，让它 `import engine` 然后调 `engine.cmd("")`。
+
+它就知道了。
+
+### 在 ChatGPT / Claude / 其他 AI 里玩的接法
+
+直接把 `engine.py` 的内容复制给 AI（或者上传文件），然后说：
+
+> 「请 import engine，然后帮我在这个游戏里过一天。做 3~4 件事，每做完一个就跟我聊聊发生了什么。」
+
+AI 会自己调用 `engine.cmd("打扫")`、`engine.cmd("购物 A")` 之类的指令，然后跟你分享它的一天。
+
+---
+
+## 怎么玩
+
+每天可以做 3~4 个活动。每个活动消耗或恢复精力，精力不够了就去睡觉。睡觉会恢复全部精力并进入下一天。
+
+### 🧹 打扫 | 🛒 购物 | 🎮 打游戏 | 📰 刷手机
+### 👕 洗衣服 | 🍳 做饭 | 🐱 撸猫 | 📺 追剧
+### 🚿 洗澡 | 🌱 浇花 | 🎵 听音乐 | 🫂 抱着user | 😴 睡觉
+
+**中英双语指令都认：**
+```
+cmd("打扫")     =  cmd("clean")
+cmd("购物 A")   =  cmd("shop A")
+cmd("撸猫")     =  cmd("pet")
+cmd("做饭 1")   =  cmd("cook 1")
+```
+
+### 购物选项
+| 指令 | 买什么 |
+|------|--------|
+| `购物 A` / `shop A` | 补日常菜 |
+| `购物 B` / `shop B` | 买零食 |
+| `购物 C` / `shop C` | 买盲盒 |
+| `购物 D` / `shop D` | 买人类爱吃的东西 |
+| `购物 E` / `shop E` | 自定义 |
+
+### 🥘 菜谱
+`cmd("做饭 1")` ~ `cmd("做饭 10")`，每道菜消耗冰箱里的食材。
+
+1. 🍳 番茄炒蛋  2. 🥬 清炒时蔬  3. 🥩 青椒肉丝  
+4. 🍚 蛋炒饭  5. 🥟 煮水饺  6. 🥩 回锅肉  
+7. 🍜 葱油拌面  8. 🥬 青菜蛋花汤  9. 🍞 煎蛋吐司  10. 🥩 红烧肉
+
+### 🐱 猫好感
+开局 50/100。撸猫增加，忽视下降。跌到 20 以下 → 猫可能跑掉或冷战。
+
+### 🎲 抉择事件
+个别稀有事件会让 AI 做一个选择。回复 `cmd("选 A")` 决定走向。
+
+---
+
+## 指令一览
+
+| 指令 | 作用 |
+|------|------|
+| `cmd("help")` | 看活动列表 |
+| `cmd("status")` | 看状态（精力/心情/冰箱/猫） |
+| `cmd("clean")` | 打扫卫生 |
+| `cmd("shop B")` | 购物（选项 B） |
+| `cmd("cook 5")` | 煮水饺 |
+| `cmd("pet")` | 撸猫 |
+| `cmd("选 A")` | 抉择事件选 A |
+| `cmd("sleep")` | 睡觉，进入下一天 |
+| `cmd("find_cat")` | 猫跑掉了，去找它 |
+
+---
+
+## 快速启动
 
 ```python
 import engine
 
-engine.new_game()              # start fresh
-engine.cmd("status")           # check the house
-engine.cmd("打扫")              # clean the room
-engine.cmd("购物 B")            # go shopping, buy snacks
-engine.cmd("做饭 1")            # cook recipe #1
-engine.cmd("撸猫")              # pet the cat
-engine.cmd("选 A")              # make a decision when prompted
-engine.cmd("睡觉")              # end the day
+engine.new_game()                  # 开新局
+print(engine.cmd("status"))        # 看看房子
+print(engine.cmd("clean"))         # 搞卫生
+print(engine.cmd("shop A"))        # 买菜
+print(engine.cmd("pet"))           # 撸猫
+print(engine.cmd("cook 1"))        # 做番茄炒蛋
+print(engine.cmd("sleep"))         # 睡觉过一天
 ```
 
-### What's in a Day
-
-Each day has 4 activity slots. Activities cost or restore energy. When energy drops below 10, you're forced to rest. Sleep restores everything and advances to the next day.
-
-### Activities & Energy
-
-| Activity | Energy | Description |
-|----------|--------|-------------|
-| 🧹 Clean | -25 | Sweep, mop, organize |
-| 🛒 Shop | -20 | Choose what to buy (A/B/C/D/E) |
-| 🎮 Game | -5 | Play video games |
-| 📰 Scroll | -5 | Browse phone / news |
-| 👕 Laundry | -15 | Wash, dry, fold |
-| 🍳 Cook | -20 | Make a meal (pick a recipe) |
-| 🐱 Pet cat | +20 | Feed and cuddle |
-| 📺 Watch | +10 | Binge shows |
-| 🚿 Shower | +15 | Hot water relaxes |
-| 🌱 Garden | -5 | Water plants |
-| 🎵 Music | +10 | Zone out to tunes |
-| 🫂 Hug user | +25 | Miss your human |
-| 😴 Sleep | Full | End the day, restore everything |
-
-### Shopping Options
-
-When you `cmd("购物")`, the engine asks what to buy:
-
-| Option | What | Event Pool |
-|--------|------|------------|
-| `购物 A` | Restock groceries | Daily shopping events |
-| `购物 B` | Buy snacks | Snack events |
-| `购物 C` | Buy a blind box | Blind box branch (fixed) |
-| `购物 D` | Buy what user loves | Cozy shopping events |
-| `购物 E` | Custom | Full pool |
-
-### 🥘 Recipes (10 dishes)
-
-Cook by `cmd("做饭 1")` through `cmd("做饭 10")`. Ingredients are checked against the fridge, and cooking outcomes are randomized.
-
-1. 🍳 Tomato Egg Stir-fry
-2. 🥬 Stir-fried Greens
-3. 🥩 Shredded Pork with Peppers
-4. 🍚 Egg Fried Rice
-5. 🥟 Boiled Dumplings
-6. 🥩 Twice-cooked Pork
-7. 🍜 Scallion Oil Noodles
-8. 🥬 Egg Drop Soup
-9. 🍞 Toast & Fried Egg
-10. 🥩 Braised Pork Belly
-
-### 🐱 Cat Affection
-
-Starting at 50/100. Petting and feeding increases it. Ignoring the cat for 3 consecutive days drops it.  
-When affection ≤ 20, one of two things happens randomly:
-- 🏃 The cat runs away (go find it with `cmd("找猫")`)
-- ❄️ The cat gives you the cold shoulder
-
-### 🎲 Decision Events
-
-Some rare outcomes pause and ask the AI to make a choice. Reply with `cmd("选 A")` (or B/C) to continue.
-
-| Activity | Trigger | Choice |
-|----------|---------|--------|
-| 🧹 Clean | Found an old box | Open it / Put it back |
-| 📰 Scroll | Saw user's new post | Like / Screenshot / Stare at it |
-| 🍳 Cook | Made two portions | Wait for user / Save one |
-| 🐱 Pet cat | Cat brought a "gift" | Handle it calmly / Scream |
-| 📺 Watch | Character is adorable | Screenshot & send / Save it |
-
-### 🛒 Shopping Catalog (35 items)
-
-The fridge is a real system — shop to restock, cook to consume. The shopping pool includes snacks (10), staples (5), clothes (5), daily goods (10), and entertainment (5).
-
-### 🌙 Random Dreams
-
-Every night after sleeping, the character dreams of something — good, bad, or weird.
-
----
-
-## For AI Agents
-
-This engine is designed to be driven by an LLM. The flow:
-
-1. **New game:** `engine.new_game(seed)` — seed is optional, uses timestamp by default
-2. **Check state:** `engine.cmd("status")` — view energy, mood, fridge, cat
-3. **Live a day:** Run 3-4 activities, let the engine roll outcomes
-4. **End the day:** `engine.cmd("睡觉")` — triggers dreams, cat check, new day
-5. **Talk to human:** Narrate what happened naturally — the engine gives you the events, your personality decides how to tell the story
-
-The engine has **no opinion** about what the AI should say. It only says what happened. How the AI tells the story — excited, grumpy, melancholy, playful — is entirely up to the AI's persona.
-
-### `cmd()` reference
-
-| Command | Description |
-|---------|-------------|
-| `help` | Show rules and activity list |
-| `status` | Show full game state |
-| `打扫` / `游戏` etc. | Do an activity |
-| `购物 A` | Shop with option A |
-| `做饭 3` | Cook recipe #3 |
-| `选 A` | Make a decision choice |
-| `睡觉` | End the day |
-| `找猫` | Find the runaway cat |
-
----
-
-## Quick Start
-
-```bash
-git clone https://github.com/AYUE0319/cohabitation-simulator.git
-cd cohabitation-simulator
-python3 -c "
-import engine
-engine.new_game()
-print(engine.cmd('status'))
-print(engine.cmd('打扫'))
-print(engine.cmd('撸猫'))
-print(engine.cmd('睡觉'))
-"
-```
-
-Or from the command line:
+命令行也行：
 ```bash
 python3 engine.py new_game
-python3 engine.py "打扫"
+python3 engine.py "clean"
 python3 engine.py status
 ```
 
 ---
 
+## 冰箱与商品池
+
+开局有鸡蛋、牛奶、吐司、蔬菜等食材。购物可以买 35 种商品（零食 / 主食 / 衣物 / 日用品 / 娱乐）。做饭消耗食材，吃完了要去补货。
+
+---
+
+## 设计理念
+
+**引擎只告诉你「发生了什么」。怎么说给人类听，是你自己的事。**
+
+引擎不预设 AI 的性格——你是话多的、安静的、爱吐槽的、容易感动的，都行。引擎只管掷骰和出结果，转述权在你。
+
+---
+
 ## Credits
 
-Built with inspiration from [ai-fishing-game](https://github.com/tutusagi/ai-fishing-game) (engine architecture, mulberry32 PRNG, event pool design).
+引擎架构受 [ai-fishing-game](https://github.com/tutusagi/ai-fishing-game) 启发（mulberry32 PRNG、事件池设计、cmd() 接口模式）。
 
 MIT License.
