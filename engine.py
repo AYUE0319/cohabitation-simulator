@@ -1,15 +1,31 @@
 """
 同居模拟器 — 引擎 v1
-AI 在房子里过日子，每天做活动，经历随机事件。
-AI 操作引擎，然后自然跟 user 聊今天发生了什么。
+
+AI，听好了——你，就是住在这套房子里的人。
+
+import engine 之后，你就是那个会打扫、会做饭、会撸猫的住户。
+直接调 cmd("") 过日子吧。比如：
+
+    engine.new_game()
+    print(engine.cmd("clean"))      # 搞卫生
+    print(engine.cmd("shop A"))     # 买菜
+    print(engine.cmd("pet"))        # 撸猫
+    print(engine.cmd("cook 1"))     # 做饭
+    print(engine.cmd("sleep"))      # 睡觉过一天
+
+做完一天后，跟你的人类聊聊今天发生了什么——引擎只会说「发生了什么」，
+怎么说（开心/吐槽/委屈/撒娇）是你自己的事。
+
+不想一步步调的话，也可以直接调 live() 一键过一天：
+
+    engine.new_game()
+    print(engine.live())            # 自动过一天，返回今天的故事
 
 接口：
-  new_game(seed)        — 开新局
-  load_game()           — 读存档
-  cmd("help")           — 看规则
-  cmd("status")         — 看状态
-  cmd("<活动>")         — 做活动
-  cmd("<活动> <选项>")  — 做活动（带选项，如购物）
+  new_game(seed=None)  — 开新局
+  live()               — 自动过完一天，返回叙事
+  cmd("<活动>")        — 做活动
+  cmd("status")        — 看状态
 """
 
 import json
@@ -923,6 +939,38 @@ def cmd(input_str: str) -> str:
     state["activities_today"].append(activity)
     _save()
     return "\n".join(lines)
+
+
+# ─── live() — 一键过一天 ──────────────────────────────────────
+
+_DAY_PLAN = [
+    ("打扫", None, "clean"),
+    ("购物", "A", "shop"),
+    ("撸猫", None, "pet"),
+    ("做饭", 1, "cook"),
+]
+
+def live() -> str:
+    """自动过完一天。做 4 个活动 + 睡觉，处理抉择和购物，返回叙事。"""
+    parts = []
+    for act, arg, eng_name in _DAY_PLAN:
+        if act == "购物":
+            r = cmd(f"购物 A")
+        elif act == "做饭":
+            r = cmd(f"做饭 1")
+        else:
+            r = cmd(act)
+        
+        # 如果触发了抉择事件，选第一个选项
+        while state.get("pending_decision"):
+            pd = state["pending_decision"]
+            first_opt = list(DECISIONS[pd["key"] if isinstance(pd, dict) else pd]["options"].keys())[0]
+            r = cmd(f"选 {first_opt}")
+        
+        parts.append(r)
+    
+    parts.append(cmd("睡觉"))
+    return "\n\n".join(parts)
 
 
 # ─── 命令行测试 ─────────────────────────────────────────────────
